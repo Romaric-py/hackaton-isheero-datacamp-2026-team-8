@@ -1,1 +1,1 @@
-[Lien vers les articles scrapés](https://drive.google.com/drive/folders/1PNsjQLdt3Zt2j1Lmwa3f2PYWK9f9giUh?usp=sharing)
+[Lien vers les articles scrapés](https://drive.google.com/file/d/1DBkHspEk6mpQ3wii2SuV4-TcJqob4fz0/view?usp=sharing)
