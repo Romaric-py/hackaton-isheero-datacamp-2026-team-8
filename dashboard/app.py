@@ -6,25 +6,47 @@
 =============================================================
 """
 
+# ruff: noqa: I001
+
+from html import escape
+from pathlib import Path
 import warnings
 
 import pandas as pd
 import plotly.graph_objects as go
-import streamlit as st
 from plotly.subplots import make_subplots
+import streamlit as st
 
-from dashboard.data_loader import load_dashboard_data
-from dashboard.plot_utils import COLOR_MAP, hex_to_rgba, themed_layout
-from dashboard.styles import apply_dashboard_styles
+from data_loader import load_dashboard_data
+from plot_utils import COLOR_MAP, hex_to_rgba, themed_layout
+from styles import apply_dashboard_styles
 
 warnings.filterwarnings("ignore")
+
+APP_DIR = Path(__file__).resolve().parent
+SHIELD_ICON = APP_DIR / "assets" / "shield-lock.svg"
+
+
+def render_section_title(icon_name: str, title: str, level: int = 2) -> None:
+    st.markdown(
+        f"<h{level} class='section-title'><i class='bi bi-{icon_name}'></i><span>{escape(title)}</span></h{level}>",
+        unsafe_allow_html=True,
+    )
+
+
+def render_note(text: str, icon_name: str = "lightbulb-fill") -> None:
+    st.markdown(
+        f"<div class='dashboard-note'><i class='bi bi-{icon_name}'></i><span>{escape(text)}</span></div>",
+        unsafe_allow_html=True,
+    )
+
 
 # ─────────────────────────────────────────────────
 # CONFIG GLOBALE
 # ─────────────────────────────────────────────────
 st.set_page_config(
     page_title="Tableau de Bord Tactique – Bénin",
-    page_icon="🛡️",
+    page_icon=str(SHIELD_ICON),
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -55,7 +77,7 @@ with st.sidebar:
         unsafe_allow_html=True,
     )
 
-    st.markdown("### 📅 Période d'analyse")
+    render_section_title("calendar3", "Période d'analyse", level=3)
     date_min = df_raw["date"].min().date()
     date_max = df_raw["date"].max().date()
 
@@ -79,14 +101,14 @@ with st.sidebar:
         )
 
     if start_idx > end_idx:
-        st.warning("⚠️ Date de début > date de fin.")
+        st.warning("Date de début supérieure à la date de fin.")
         start_idx, end_idx = end_idx, start_idx
 
     selected_start = pd.Period(month_labels[start_idx], freq="M").start_time
     selected_end = pd.Period(month_labels[end_idx], freq="M").end_time
 
     st.markdown("---")
-    st.markdown("### 🗺️ Départements")
+    render_section_title("geo-alt", "Départements", level=3)
     all_depts = sorted(df_raw["departement"].unique())
     selected_depts = st.multiselect(
         "Sélectionner",
@@ -96,7 +118,7 @@ with st.sidebar:
     )
 
     st.markdown("---")
-    st.markdown("### 🎯 Types d'événements")
+    render_section_title("bullseye", "Types d'événements", level=3)
     all_types = list(COLOR_MAP.keys())
     selected_types = st.multiselect(
         "Types",
@@ -106,8 +128,8 @@ with st.sidebar:
     )
 
     st.markdown("---")
-    st.caption(
-        "💡 Tous les graphiques se mettent à jour en temps réel selon vos filtres."
+    render_note(
+        "Tous les graphiques se mettent à jour en temps réel selon vos filtres."
     )
 
 
@@ -152,7 +174,7 @@ st.markdown(
 # ─────────────────────────────────────────────────
 # SECTION 1 – KPIs
 # ─────────────────────────────────────────────────
-st.markdown("## 📊 Chiffres Clés")
+render_section_title("bar-chart-line", "Chiffres Clés", level=2)
 
 if df.empty:
     st.error("Aucune donnée pour les filtres sélectionnés.")
@@ -178,7 +200,7 @@ kpis = [
         total_incidents,
         "Incidents Totaux",
         "#FF4E5B",
-        f"📍 {len(selected_depts)} depts",
+        f"<i class='bi bi-geo-alt-fill icon-inline'></i><span class='icon-follow'>{len(selected_depts)} depts</span>",
     ),
     (
         col2,
@@ -231,44 +253,44 @@ alert_col1, alert_col2, alert_col3 = st.columns(3)
 with alert_col1:
     if ratio_reactivite < 0.05:
         st.error(
-            "⚠️ **Alerte Critique** : Capacité de réponse de l'État quasi-nulle sur cette période. Ratio réactivité < 0.05"
+            "**Alerte Critique** : Capacité de réponse de l'État quasi-nulle sur cette période. Ratio réactivité < 0.05"
         )
     elif ratio_reactivite < 0.3:
         st.warning(
-            f"⚡ **Réactivité Faible** : Le ratio Action/Réaction est de **{ratio_reactivite:.2f}**. La réponse institutionnelle reste insuffisante."
+            f"**Réactivité Faible** : Le ratio Action/Réaction est de **{ratio_reactivite:.2f}**. La réponse institutionnelle reste insuffisante."
         )
     else:
         st.success(
-            f"✅ **Réactivité Satisfaisante** : Ratio de **{ratio_reactivite:.2f}** — La réponse de l'État suit l'évolution des conflits."
+            f"**Réactivité Satisfaisante** : Ratio de **{ratio_reactivite:.2f}** — La réponse de l'État suit l'évolution des conflits."
         )
 
 with alert_col2:
     pct_conflit = nb_conflits / total_incidents * 100 if total_incidents > 0 else 0
     if pct_conflit > 60:
         st.error(
-            f"🔴 **Zone Rouge** : {pct_conflit:.0f}% des événements sont des conflits. Situation alarmante."
+            f"**Zone Rouge** : {pct_conflit:.0f}% des événements sont des conflits. Situation alarmante."
         )
     elif pct_conflit > 40:
         st.warning(
-            f"🟡 **Zone de Tension** : {pct_conflit:.0f}% des événements sont conflictuels. Surveillance accrue recommandée."
+            f"**Zone de Tension** : {pct_conflit:.0f}% des événements sont conflictuels. Surveillance accrue recommandée."
         )
     else:
         st.info(
-            f"🔵 **Zone Modérée** : {pct_conflit:.0f}% de conflits. Dynamique globalement stable."
+            f"**Zone Modérée** : {pct_conflit:.0f}% de conflits. Dynamique globalement stable."
         )
 
 with alert_col3:
     if goldstein_moy < -3:
         st.error(
-            f"📉 **Stabilité Critique** : Score Goldstein de **{goldstein_moy:.2f}**. Risque de déstabilisation élevé."
+            f"**Stabilité Critique** : Score Goldstein de **{goldstein_moy:.2f}**. Risque de déstabilisation élevé."
         )
     elif goldstein_moy < 0:
         st.warning(
-            f"⚠️ **Instabilité Latente** : Score Goldstein de **{goldstein_moy:.2f}**. Tendance négative à surveiller."
+            f"**Instabilité Latente** : Score Goldstein de **{goldstein_moy:.2f}**. Tendance négative à surveiller."
         )
     else:
         st.success(
-            f"📈 **Stabilité Positive** : Score Goldstein de **{goldstein_moy:.2f}**. Dynamique coopérative dominante."
+            f"**Stabilité Positive** : Score Goldstein de **{goldstein_moy:.2f}**. Dynamique coopérative dominante."
         )
 
 st.markdown("---")
@@ -277,7 +299,7 @@ st.markdown("---")
 # ─────────────────────────────────────────────────
 # SECTION 2 – PANORAMA DE LA CRISE (Stacked Bar)
 # ─────────────────────────────────────────────────
-st.markdown("## 🏛️ Panorama de la Crise par Département")
+render_section_title("building", "Panorama de la Crise par Département", level=2)
 
 dept_type = df.groupby(["departement", "event_type"]).size().reset_index(name="count")
 dept_order = (
@@ -322,11 +344,9 @@ st.markdown("---")
 # ─────────────────────────────────────────────────
 # SECTION 3 – DYNAMIQUE TEMPORELLE
 # ─────────────────────────────────────────────────
-st.markdown("## 📈 Dynamique Temporelle des Incidents")
+render_section_title("graph-up", "Dynamique Temporelle des Incidents", level=2)
 
-tab1, tab2 = st.tabs(
-    ["📅 Évolution mensuelle (Line Chart)", "📊 Évolution hebdomadaire"]
-)
+tab1, tab2 = st.tabs(["Évolution mensuelle", "Évolution hebdomadaire"])
 
 with tab1:
     df["mois_period"] = df["date"].dt.to_period("M").dt.to_timestamp()
@@ -359,7 +379,7 @@ with tab1:
         x1="2025-12-31",
         fillcolor="rgba(255,60,74,0.06)",
         line_width=0,
-        annotation_text="📍 Pic Q4",
+        annotation_text="Pic Q4",
         annotation_position="top left",
         annotation_font=dict(color="#FF4E5B", size=11),
     )
@@ -411,7 +431,7 @@ st.markdown("---")
 # ─────────────────────────────────────────────────
 # SECTION 4 – CARTOGRAPHIE TACTIQUE (Bubble Map)
 # ─────────────────────────────────────────────────
-st.markdown("## 🗺️ Cartographie Tactique — Points Chauds")
+render_section_title("geo-alt-fill", "Cartographie Tactique — Points Chauds", level=2)
 
 map_agg = (
     df.groupby(["ville", "departement", "event_type", "latitude", "longitude"])
@@ -512,7 +532,9 @@ st.markdown("---")
 # ─────────────────────────────────────────────────
 # SECTION 5 – INDICE DE RÉACTIVITÉ
 # ─────────────────────────────────────────────────
-st.markdown("## ⚡ Indice de Réactivité — Ratio Action/Réaction")
+render_section_title(
+    "activity", "Indice de Réactivité — Ratio Action/Réaction", level=2
+)
 
 st.markdown(
     """
@@ -630,19 +652,19 @@ st.plotly_chart(fig_reac, use_container_width=True)
 # Alerte ratio global
 if ratio_reactivite < 0.05:
     st.error(
-        "🚨 **ALERTE MAXIMALE** : Capacité de réponse critique sur cette période. Le ratio de réactivité est inférieur au seuil critique de 0.05. Intervention urgente requise."
+        "**Alerte maximale** : Capacité de réponse critique sur cette période. Le ratio de réactivité est inférieur au seuil critique de 0.05. Intervention urgente requise."
     )
 elif ratio_reactivite < 0.1:
     st.warning(
-        f"⚠️ **Zone Rouge** : Ratio de réactivité à **{ratio_reactivite:.3f}** — La réponse institutionnelle est très insuffisante face à la dynamique conflictuelle."
+        f"**Zone Rouge** : Ratio de réactivité à **{ratio_reactivite:.3f}** — La réponse institutionnelle est très insuffisante face à la dynamique conflictuelle."
     )
 elif ratio_reactivite < 0.3:
     st.warning(
-        f"🟡 **Zone Orange** : Ratio de réactivité à **{ratio_reactivite:.3f}** — Des efforts de coopération sont présents mais restent insuffisants."
+        f"**Zone Orange** : Ratio de réactivité à **{ratio_reactivite:.3f}** — Des efforts de coopération sont présents mais restent insuffisants."
     )
 else:
     st.success(
-        f"✅ **Zone Verte** : Ratio de réactivité à **{ratio_reactivite:.3f}** — La réponse de l'État suit correctement l'évolution des conflits."
+        f"**Zone Verte** : Ratio de réactivité à **{ratio_reactivite:.3f}** — La réponse de l'État suit correctement l'évolution des conflits."
     )
 
 st.markdown("---")
@@ -651,12 +673,12 @@ st.markdown("---")
 # ─────────────────────────────────────────────────
 # SECTION 6 – ÉVÉNEMENTS CLÉS / INSIGHTS
 # ─────────────────────────────────────────────────
-st.markdown("## 🔍 Insights & Événements Clés")
+render_section_title("search", "Insights & Événements Clés", level=2)
 
 col_i1, col_i2, col_i3 = st.columns(3)
 
 with col_i1:
-    st.markdown("### 🏆 Top 5 Villes Incidents")
+    render_section_title("trophy", "Top 5 Villes Incidents", level=3)
     top_villes = df.groupby("ville").size().sort_values(ascending=False).head(5)
     for i, (ville, cnt) in enumerate(top_villes.items()):
         dept = df[df["ville"] == ville]["departement"].iloc[0]
@@ -677,7 +699,7 @@ with col_i1:
         )
 
 with col_i2:
-    st.markdown("### 📊 Distribution Goldstein")
+    render_section_title("bar-chart-line", "Distribution Goldstein", level=3)
     fig_hist = go.Figure(
         go.Histogram(
             x=df["goldstein"],
@@ -707,7 +729,7 @@ with col_i2:
     st.plotly_chart(fig_hist, use_container_width=True)
 
 with col_i3:
-    st.markdown("### 🥧 Part des types")
+    render_section_title("pie-chart", "Part des types", level=3)
     type_counts = df["event_type"].value_counts()
     fig_pie = go.Figure(
         go.Pie(
@@ -736,8 +758,8 @@ st.markdown("---")
 st.markdown(
     f"""
 <div style='text-align:center;color:#3A4070;font-size:0.75rem;font-family:IBM Plex Mono,monospace;padding:16px 0;'>
-    🛡️ TABLEAU DE BORD TACTIQUE — ANALYSE DE CRISE BÉNIN 2025<br>
-    Données simulées à des fins de démonstration · {total_incidents:,} événements analysés<br>
+    <span style='color:#6C8EFF;'><i class='bi bi-shield-lock icon-inline'></i></span><span class='icon-follow'>TABLEAU DE BORD TACTIQUE — ANALYSE DE CRISE BÉNIN 2025</span><br>
+    Données extraites depuis le fichier CSV · {total_incidents:,} événements analysés<br>
     Période : {selected_start.strftime("%d %b %Y")} → {selected_end.strftime("%d %b %Y")}
     &nbsp;|&nbsp; Départements sélectionnés : {len(selected_depts)}/{len(all_depts)}
 </div>
