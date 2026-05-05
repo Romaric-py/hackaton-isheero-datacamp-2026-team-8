@@ -2,3 +2,4 @@
 data/raw/articles/
 .ipynb_checkpoints/
 .private/
+__pycache__/
