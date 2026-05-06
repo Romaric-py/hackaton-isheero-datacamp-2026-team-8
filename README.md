@@ -11,7 +11,7 @@ Le notebook d'exploration s'appuie sur le jeu de données nettoyé issu de BigQu
 ## Résultats clés du notebook
 
 - 23 859 événements liés au Bénin sur les 12 derniers mois.
-- 26,2 % d'événements de nature conflictuelle.
+- 36,3 % d'événements de nature conflictuelle.
 - Un pic net en décembre 2025 avec 4 221 événements.
 - Une concentration des signaux de risque dans le nord du pays, notamment vers Atacora, Porga, Malanville, Kandi, Karimama et Natitingou.
 - 19,9 % d'acteurs non identifiés (`UNKNOWN`), ce qui confirme la difficulté à attribuer certains réseaux.
@@ -40,10 +40,12 @@ Le notebook d'exploration s'appuie sur le jeu de données nettoyé issu de BigQu
 
 ### Fichiers importants
 
-- [Notebook principal](notebooks/Analyse%20exploratoire%20avec%20pipeline%20GDELT.ipynb)
+- [Notebook principal + Prédiction](notebooks/Analyse%20exploratoire%20avec%20pipeline%20GDELT.ipynb)
 - [Script de nettoyage](data/clean/clean_gdelt_benin.py)
 - [Données nettoyées CSV](data/clean/bq-results-last-12-months-clean.csv)
 - [Archive d'articles scrappés](https://drive.google.com/file/d/1DBkHspEk6mpQ3wii2SuV4-TcJqob4fz0/view?usp=sharing)
+- [Dashboard en ligne](https://hackaton-isheero-datacamp-2026-team-8-dashboard.streamlit.app/)
+- [Drive de la vidéo](https://drive.google.com/drive/folders/1LLnVvy11NiYAhRzChac474sx4uYFiyhP?usp=sharing)
 
 ## Guide de prise en main
 
