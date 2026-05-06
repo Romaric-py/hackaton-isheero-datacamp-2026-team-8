@@ -33,19 +33,32 @@ Le notebook d'exploration s'appuie sur le jeu de données nettoyé issu de BigQu
 │       ├── gdelt_benin_clean.parquet
 │       └── fichiers d'analyse générés
 ├── notebooks/
-│   └── Analyse exploratoire avec pipeline GDELT.ipynb
+│   ├── Analyse exploratoire avec pipeline GDELT.ipynb # <-- notebook principal d'analyse
+│   ├── events_isolation.ipynb
+│   ├── prediction.ipynb
+│   └── topic_modeling.ipynb
 ├── dashboard/
+│   ├── app.py
+│   ├── data_loader.py
+│   ├── plot_utils.py
+│   └── styles.py
 └── models/
 ```
 
 ### Fichiers importants
 
 - [Notebook principal + Prédiction](notebooks/Analyse%20exploratoire%20avec%20pipeline%20GDELT.ipynb)
+- [Notebook de topic modeling](notebooks/topic_modeling.ipynb)
 - [Script de nettoyage](data/clean/clean_gdelt_benin.py)
 - [Données nettoyées CSV](data/clean/bq-results-last-12-months-clean.csv)
+- [Application Streamlit](dashboard/app.py)
 - [Archive d'articles scrappés](https://drive.google.com/file/d/1DBkHspEk6mpQ3wii2SuV4-TcJqob4fz0/view?usp=sharing)
 - [Dashboard en ligne](https://hackaton-isheero-datacamp-2026-team-8-dashboard.streamlit.app/)
 - [Drive de la vidéo](https://drive.google.com/drive/folders/1LLnVvy11NiYAhRzChac474sx4uYFiyhP?usp=sharing)
+
+Pour disposer des articles scrapés, téléchargez le fichier ZIP via le lien ci-dessus, puis décompressez-le dans `data/raw` de sorte à obtenir un dossier `data/raw/articles/`.
+
+NOTE: La phase de NLP a notamment servi à dégager les principales thématiques abordées dans les articles liés au Bénin.
 
 ## Guide de prise en main
 
@@ -108,7 +121,9 @@ Puis ouvrez le dossier `notebooks/` et lancez `Analyse exploratoire avec pipelin
 
 ### 4. Lancer le dashboard
 
-Le dossier `dashboard/` est prévu pour l'application Streamlit du projet. Si votre version du dépôt contient le point d'entrée `dashboard/app.py`, lancez :
+Une fois encore, ons suppose que l'environnement virtuel est activé.
+
+L'application Streamlit est disponible dans `dashboard/app.py`. Lancez-la depuis la racine du projet avec :
 
 ```bash
 streamlit run dashboard/app.py
@@ -174,4 +189,4 @@ Ce projet a été assisté avec :
 
 ## Reproductibilité
 
-Le projet a été structuré pour rester simple à relancer : un environnement virtuel Python, un script de nettoyage unique, un notebook d'exploration principal et un dossier dédié au dashboard. Pour toute réexécution, partez du dépôt propre, installez les dépendances puis relancez le script de nettoyage avant d'ouvrir le notebook ou le dashboard.
+Le projet a été structuré pour rester simple à relancer : un environnement virtuel Python, un script de nettoyage unique, plusieurs notebooks d'exploration et de modélisation, ainsi qu'un dashboard Streamlit dédié. Pour toute réexécution, partez du dépôt propre, installez les dépendances puis relancez le script de nettoyage ou utilisez directement les données nettoyées, avant d'ouvrir le notebook ou le dashboard.
