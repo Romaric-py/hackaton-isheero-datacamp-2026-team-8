@@ -190,9 +190,15 @@ dept_le_plus_touche = (
 nb_conflits = df[df["event_type"].str.contains("Conflit")].shape[0]
 nb_coops = df[df["event_type"].str.contains("Coopération")].shape[0]
 ratio_reactivite = nb_coops / nb_conflits if nb_conflits > 0 else 0
-total_fatalities = df["fatalities"].sum()
 
-col1, col2, col3, col4, col5 = st.columns(5)
+# Calcul dynamique du texte du KPI départements
+real_depts_selected = [d for d in selected_depts if d != "Bénin (Général)"]
+benin_general_selected = "Bénin (Général)" in selected_depts
+delta_dept = f"{len(real_depts_selected)} depts"
+if benin_general_selected:
+    delta_dept += " + bénin général"
+
+col1, col2, col3, col4 = st.columns(4)
 
 kpis = [
     (
@@ -200,7 +206,7 @@ kpis = [
         total_incidents,
         "Incidents Totaux",
         "#FF4E5B",
-        f"<i class='bi bi-geo-alt-fill icon-inline'></i><span class='icon-follow'>{len(selected_depts)} depts</span>",
+        f"<i class='bi bi-geo-alt-fill icon-inline'></i><span class='icon-follow'>{delta_dept}</span>",
     ),
     (
         col2,
@@ -222,13 +228,6 @@ kpis = [
         "Ratio Réactivité",
         "#30C080",
         "Actions/Réactions État",
-    ),
-    (
-        col5,
-        int(total_fatalities),
-        "Victimes Signalées",
-        "#FF3A4A",
-        "Total décès rapportés",
     ),
 ]
 
@@ -438,7 +437,6 @@ map_agg = (
     .agg(
         count=("goldstein", "count"),
         goldstein_moy=("goldstein", "mean"),
-        fatalities=("fatalities", "sum"),
     )
     .reset_index()
 )
@@ -449,7 +447,6 @@ ville_agg = (
     .agg(
         total=("goldstein", "count"),
         goldstein_moy=("goldstein", "mean"),
-        fatalities=("fatalities", "sum"),
     )
     .reset_index()
 )
@@ -471,9 +468,6 @@ ville_agg["hover"] = (
     + "</b><br>"
     + "Goldstein moyen: <b>"
     + ville_agg["goldstein_moy"].round(2).astype(str)
-    + "</b><br>"
-    + "Victimes: <b>"
-    + ville_agg["fatalities"].astype(str)
     + "</b><br>"
     + "Type dominant: <b>"
     + ville_agg["type_dominant"]

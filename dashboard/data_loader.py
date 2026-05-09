@@ -10,6 +10,23 @@ DATA_FILE = (
     / "bq-results-last-12-months-clean.csv"
 )
 
+ADM1_MAP = {
+    "BN07": "Alibori",
+    "BN08": "Atacora",
+    "BN09": "Atlantique",
+    "BN10": "Borgou",
+    "BN11": "Collines",
+    "BN12": "Couffo",
+    "BN13": "Donga",
+    "BN14": "Littoral",
+    "BN15": "Mono",
+    "BN16": "Ouémé",
+    "BN17": "Plateau",
+    "BN18": "Zou",
+    "BN": "Bénin (Général)",
+    "BN00": "Bénin (Général)",
+}
+
 
 @st.cache_data
 def load_dashboard_data():
@@ -35,11 +52,10 @@ def load_dashboard_data():
         df["ActionGeo_FullName"].fillna("").astype(str).str.split(",", n=2, expand=True)
     )
     df["ville"] = geo_parts[0].fillna("").str.strip().str.strip('"')
-    df["departement"] = geo_parts[1].fillna("").str.strip().str.strip('"')
+    df["departement"] = df["ActionGeo_ADM1Code"].map(ADM1_MAP)
     df["goldstein"] = pd.to_numeric(df["GoldsteinScale"], errors="coerce")
     df["latitude"] = pd.to_numeric(df["ActionGeo_Lat"], errors="coerce")
     df["longitude"] = pd.to_numeric(df["ActionGeo_Long"], errors="coerce")
-    df["fatalities"] = 0
 
     df = df[
         df["date"].notna()
@@ -47,9 +63,7 @@ def load_dashboard_data():
         & df["goldstein"].notna()
         & df["latitude"].notna()
         & df["longitude"].notna()
-        & df["departement"].ne("")
-        & df["departement"].str.lower().ne("benin")
-        & df["departement"].str.lower().ne("unknown")
+        & df["departement"].notna()
         & df["ville"].ne("")
         & df["ville"].str.lower().ne("benin")
         & df["ville"].str.lower().ne("unknown")
@@ -66,7 +80,6 @@ def load_dashboard_data():
             "goldstein",
             "latitude",
             "longitude",
-            "fatalities",
             "semaine",
         ]
     ].copy()

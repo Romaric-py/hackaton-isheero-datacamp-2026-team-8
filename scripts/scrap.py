@@ -23,24 +23,39 @@ def save_article_text(article_id, article_text, dest_dir):
         f.write(article_text)
 
 
-# Example usage
 if __name__ == "__main__":
     dest_dir = "data/raw/articles/"
-    csv_file = "data/clean/gdelt_benin_clean.csv"
-    visited_urls = set()
+    csv_file = "data/clean/bq-results-last-12-months-clean.csv"
+    visited_url_file = "data/raw/visited_urls.txt"
+    
+    if os.path.exists(visited_url_file):
+        with open(visited_url_file, "r") as f:
+            visited_urls = set(f.read().splitlines())
+    else:
+        visited_urls = set()
+
+    if not os.path.exists(dest_dir):
+        os.makedirs(dest_dir)
     with open(csv_file) as file:
         reader = csv.DictReader(file)
+
+        count = 0
         for row in reader:
+            count += 1
             url = row["SOURCEURL"]
             try:
                 if url in visited_urls or os.path.exists(f"{dest_dir}{row['GLOBALEVENTID']}.txt"):
-                    print(f"Skipping URL {url} as it has already been processed.")
+                    print(f"{count}: Skipping URL {url} as it has already been processed.")
                     continue
 
+                print(f"{count}: Scraping article from URL: {url}")
                 article_text = scrape_article(url)
                 if article_text:
                     article_id = row["GLOBALEVENTID"]
                     save_article_text(article_id, article_text, dest_dir)
                 visited_urls.add(url)
             except Exception as e:
-                print(f"Error processing URL {url}: {e}")
+                print(f"{count}: Error processing URL {url}: {e}")
+
+    with open(visited_url_file, "w") as f:
+        f.write("\n".join(visited_urls))
