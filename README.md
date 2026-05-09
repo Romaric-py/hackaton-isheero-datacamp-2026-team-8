@@ -52,7 +52,7 @@ Le notebook d'exploration s'appuie sur le jeu de données nettoyé issu de BigQu
 - [Script de nettoyage](data/clean/clean_gdelt_benin.py)
 - [Données nettoyées CSV](data/clean/bq-results-last-12-months-clean.csv)
 - [Application Streamlit](dashboard/app.py)
-- [Archive d'articles scrappés](https://drive.google.com/file/d/1DBkHspEk6mpQ3wii2SuV4-TcJqob4fz0/view?usp=sharing)
+- [Archive d'articles scrappés](https://drive.google.com/file/d/1IktfJMzkHrDvc7V_MP6Wm1T3YThn_M48/view?usp=sharing) (6806 fichiers texte brut)
 - [Dashboard en ligne](https://hackaton-isheero-datacamp-2026-team-8-dashboard.streamlit.app/)
 - [Drive de la vidéo](https://drive.google.com/drive/folders/1LLnVvy11NiYAhRzChac474sx4uYFiyhP?usp=sharing)
 
