@@ -27,16 +27,16 @@ if __name__ == "__main__":
     dest_dir = "data/raw/articles/"
     csv_file = "data/clean/bq-results-last-12-months-clean.csv"
     visited_url_file = "data/raw/visited_urls.txt"
-    
+
     if os.path.exists(visited_url_file):
-        with open(visited_url_file, "r") as f:
+        with open(visited_url_file) as f:
             visited_urls = set(f.read().splitlines())
     else:
         visited_urls = set()
 
     if not os.path.exists(dest_dir):
         os.makedirs(dest_dir)
-    with open(csv_file) as file:
+    with open(csv_file) as file, open(visited_url_file, "a") as visited_file:
         reader = csv.DictReader(file)
 
         count = 0
@@ -54,8 +54,7 @@ if __name__ == "__main__":
                     article_id = row["GLOBALEVENTID"]
                     save_article_text(article_id, article_text, dest_dir)
                 visited_urls.add(url)
+                visited_file.write(url + "\n")
             except Exception as e:
                 print(f"{count}: Error processing URL {url}: {e}")
 
-    with open(visited_url_file, "w") as f:
-        f.write("\n".join(visited_urls))
