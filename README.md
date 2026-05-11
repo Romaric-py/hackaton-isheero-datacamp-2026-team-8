@@ -76,40 +76,67 @@ git clone git@github.com:Romaric-py/hackaton-isheero-datacamp-2026-team-8.git
 
 ### 2. Préparer l'environnement Python
 
-Depuis la racine du projet :
+> **Prérequis : Python 3.11 ou 3.12 obligatoire.**
+> Python 3.13+ n'est pas encore supporté par spaCy et BERTopic (utilisés pour le topic modeling). Python 3.14, livré par défaut sur certains systèmes, provoquera des erreurs d'installation. Vérifiez votre version avant de continuer.
+
+**Vérifier votre version Python :**
 
 ```bash
-cd hackaton-isheero-datacamp-2026-team-8
-python -m venv .venv
+python --version
 ```
 
-Activer ensuite l'environnement virtuel :
+Si vous n'avez pas Python 3.11 ou 3.12, installez-le :
+
+- **Windows** : `winget install Python.Python.3.11`
+- **Linux/macOS** : via [python.org](https://www.python.org/downloads/) ou votre gestionnaire de paquets
+
+**Créer l'environnement virtuel avec la bonne version :**
+
+Sous Windows :
+
+```powershell
+py -3.11 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
 
 Sous Linux / macOS :
 
 ```bash
+python3.11 -m venv .venv
 source .venv/bin/activate
 ```
 
-Sous Windows :
+**Installer toutes les dépendances en une seule commande :**
 
 ```bash
-.venv\\Scripts\\activate
+pip install -r requirements.txt -r requirements-nlp.txt
 ```
 
-Installer les dépendances :
+> Note : `requirements-nlp.txt` inclut PyTorch via `sentence-transformers`, le téléchargement peut atteindre ~2 Go.
 
-```bash
-python -m pip install -r requirements.txt
-```
-
-Pour désactiver l'environnement virtuel, utilisez :
+Pour désactiver l'environnement virtuel :
 
 ```bash
 deactivate
 ```
 
 ### 3. Lancer le notebook
+
+Deux options selon votre éditeur :
+
+**Option A — VS Code (recommandé)**
+
+Ouvrez le fichier [notebooks/Analyse exploratoire avec pipeline GDELT.ipynb](notebooks/Analyse%20exploratoire%20avec%20pipeline%20GDELT.ipynb) directement dans VS Code.
+
+En haut à droite du notebook, cliquez sur le sélecteur de kernel (il affiche souvent `Python 3.x` par défaut) et choisissez :
+
+```
+.venv (3.11.9) (Python 3.11.9)  —  .venv\Scripts\python.exe
+```
+
+> **Important :** ne pas choisir `Python 3.13`, `Python 3.14` ou tout autre interpréteur global. Seul le `.venv` contient les dépendances du projet (`pandas`, `spacy`, `bertopic`, etc.).
+
+**Option B — Jupyter dans le terminal**
 
 Avec l'environnement virtuel activé :
 
@@ -121,7 +148,7 @@ Puis ouvrez le dossier `notebooks/` et lancez `Analyse exploratoire avec pipelin
 
 ### 4. Lancer le dashboard
 
-Une fois encore, ons suppose que l'environnement virtuel est activé.
+Une fois encore, on suppose que l'environnement virtuel est activé.
 
 L'application Streamlit est disponible dans `dashboard/app.py`. Lancez-la depuis la racine du projet avec :
 

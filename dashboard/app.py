@@ -16,6 +16,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import streamlit as st
+from sklearn.ensemble import RandomForestRegressor
 
 from data_loader import load_dashboard_data
 from plot_utils import COLOR_MAP, hex_to_rgba, themed_layout
@@ -25,6 +26,49 @@ warnings.filterwarnings("ignore")
 
 APP_DIR = Path(__file__).resolve().parent
 SHIELD_ICON = APP_DIR / "assets" / "shield-lock.svg"
+_CLEAN_CSV = APP_DIR.parent / "data" / "clean" / "bq-results-last-12-months-clean.csv"
+
+
+@st.cache_resource
+def build_conflict_model():
+    df_local = pd.read_csv(_CLEAN_CSV, low_memory=False)
+    df_local["QuadClass"] = pd.to_numeric(df_local["QuadClass"], errors="coerce")
+    df_local["AvgTone"] = pd.to_numeric(df_local["AvgTone"], errors="coerce")
+    df_local["is_conflict"] = df_local["QuadClass"].isin([3, 4]).astype(int)
+    df_daily = df_local.groupby("SQLDATE").agg(
+        AvgTone=("AvgTone", "mean"),
+        total_evenements=("GLOBALEVENTID", "count"),
+        conflits=("is_conflict", "sum"),
+    ).reset_index()
+    df_daily["target"] = df_daily["conflits"].shift(-1)
+    df_daily = df_daily.dropna()
+    X = df_daily[["AvgTone", "total_evenements"]]
+    y = df_daily["target"]
+    model = RandomForestRegressor(n_estimators=100, random_state=42)
+    model.fit(X, y)
+    return model
+
+
+def _interpret_conflict(count: int):
+    if count < 10:
+        return "Faible risque", "#30C080", (
+            "La situation semble calme. Le modèle anticipe peu de conflits pour la prochaine période, "
+            "ce qui suggère une dynamique de tension modérée ou en amélioration."
+        )
+    if count < 20:
+        return "Risque modéré", "#FF9500", (
+            "Niveau de tension notable. Le modèle prédit un nombre de conflits dans la moyenne historique. "
+            "Une vigilance accrue est recommandée dans les zones à risque du nord du pays."
+        )
+    if count < 35:
+        return "Risque élevé", "#FF6040", (
+            "Situation tendue. Le modèle anticipe un nombre de conflits supérieur à la moyenne. "
+            "Les indicateurs suggèrent une dégradation du contexte sécuritaire."
+        )
+    return "Risque critique", "#FF3A4A", (
+        "Alerte maximale. Le modèle prédit un niveau de conflictualité très élevé. "
+        "Cela correspond généralement aux périodes de pic observées, notamment en décembre 2025."
+    )
 
 
 def render_section_title(icon_name: str, title: str, level: int = 2) -> None:
@@ -744,6 +788,131 @@ with col_i3:
         ),
     )
     st.plotly_chart(fig_pie, use_container_width=True)
+
+# ─────────────────────────────────────────────────
+# SECTION 7 – SIMULATEUR DE CONFLITS (ML)
+# ─────────────────────────────────────────────────
+render_section_title("sliders", "Simulateur de Conflits — Prédiction ML", level=2)
+
+st.markdown(
+    """
+<p style='color:#6070A0;font-size:0.9rem;margin-bottom:1rem;'>
+    Ce simulateur utilise un modèle de <b style='color:#C0C8E0;'>Random Forest</b> entraîné sur
+    <b style='color:#C0C8E0;'>23 859 événements GDELT</b> du Bénin (agrégés par jour).
+    En fonction de la tonalité médiatique et du volume d'activité observé aujourd'hui,
+    il prédit le <b>nombre de conflits attendus pour le prochain cycle</b>.
+</p>
+""",
+    unsafe_allow_html=True,
+)
+
+conflict_model = build_conflict_model()
+
+with st.form("prediction_form"):
+    col_l, col_r = st.columns(2)
+
+    with col_l:
+        render_section_title("newspaper", "Couverture médiatique", level=3)
+        avg_tone = st.slider(
+            "Tonalité moyenne des articles de presse",
+            min_value=-20.0,
+            max_value=10.0,
+            value=-2.0,
+            step=0.5,
+            help="Sentiment moyen des médias sur la journée. "
+            "Négatif = couverture alarmiste, Positif = couverture favorable.",
+        )
+        st.caption("← Très négatif / alarmiste · · · · · Très positif / favorable →")
+
+    with col_r:
+        render_section_title("bar-chart-line", "Volume d'activité", level=3)
+        total_evenements = st.slider(
+            "Nombre total d'événements aujourd'hui",
+            min_value=1,
+            max_value=200,
+            value=65,
+            help="Nombre d'événements GDELT enregistrés sur la journée (moyenne historique : ~65/jour).",
+        )
+
+    submitted = st.form_submit_button(
+        "Simuler le risque de conflit",
+        use_container_width=True,
+    )
+
+if submitted:
+    X = [[avg_tone, total_evenements]]
+    prediction = int(round(float(conflict_model.predict(X)[0])))
+    label, color, explanation = _interpret_conflict(prediction)
+
+    res_col1, res_col2 = st.columns([1, 1])
+
+    with res_col1:
+        fig_gauge = go.Figure(
+            go.Indicator(
+                mode="gauge+number",
+                value=prediction,
+                number={"font": {"color": color, "size": 46}, "suffix": " conflits"},
+                title={
+                    "text": "Conflits prévus (prochain cycle)",
+                    "font": {"color": "#8090C0", "size": 13},
+                },
+                gauge={
+                    "axis": {
+                        "range": [0, 50],
+                        "tickcolor": "#5060A0",
+                        "tickfont": {"color": "#5060A0"},
+                    },
+                    "bar": {"color": color, "thickness": 0.3},
+                    "bgcolor": "rgba(0,0,0,0)",
+                    "borderwidth": 0,
+                    "steps": [
+                        {"range": [0, 10], "color": "rgba(48,192,128,0.22)"},
+                        {"range": [10, 20], "color": "rgba(255,149,0,0.12)"},
+                        {"range": [20, 35], "color": "rgba(255,96,64,0.15)"},
+                        {"range": [35, 50], "color": "rgba(255,58,74,0.2)"},
+                    ],
+                    "threshold": {
+                        "line": {"color": "white", "width": 2},
+                        "thickness": 0.75,
+                        "value": prediction,
+                    },
+                },
+            )
+        )
+        fig_gauge.update_layout(
+            height=260,
+            paper_bgcolor="rgba(0,0,0,0)",
+            font={"color": "#C0C8E0"},
+            margin=dict(l=20, r=20, t=40, b=10),
+        )
+        st.plotly_chart(fig_gauge, use_container_width=True)
+
+    with res_col2:
+        st.markdown(
+            f"""
+<div style='background:rgba(13,15,26,0.7);border-left:4px solid {color};border-radius:0 8px 8px 0;
+            padding:20px 24px;margin-top:18px;'>
+    <div style='font-size:1.25rem;font-weight:700;color:{color};margin-bottom:10px;'>
+        {label}
+    </div>
+    <div style='color:#C0C8E0;font-size:0.88rem;line-height:1.7;margin-bottom:14px;'>
+        {explanation}
+    </div>
+    <div style='font-size:0.78rem;color:#404870;border-top:1px solid #1A2040;padding-top:12px;'>
+        <b style='color:#5060A0;'>Paramètres utilisés</b><br>
+        Tonalité : <b style='color:#8090C0;'>{avg_tone:+.1f}</b> &nbsp;·&nbsp;
+        Événements : <b style='color:#8090C0;'>{total_evenements}</b>
+    </div>
+</div>
+""",
+            unsafe_allow_html=True,
+        )
+
+render_note(
+    "Le modèle s'appuie sur la tonalité médiatique et le volume d'événements journaliers "
+    "pour estimer la conflictualité du prochain cycle. La moyenne historique est d'environ 23 conflits/jour.",
+    icon_name="info-circle",
+)
 
 # ─────────────────────────────────────────────────
 # FOOTER

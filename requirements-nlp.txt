@@ -1,0 +1,5 @@
+# Packages requis uniquement pour notebooks/topic_modeling.ipynb
+# Installation : pip install -r requirements-nlp.txt
+sentence-transformers==3.4.1
+bertopic==0.16.4
+spacy==3.8.5
